@@ -1,5 +1,45 @@
 {
   "users": [],
-  "media": [],
-  "blockchain": []
+  "media": [
+    {
+      "id": "1a19867b-76df-41f2-8807-98c564bd3ce6",
+      "filename": "guardplay-1776961901115-270183629-protected.jpg",
+      "originalName": "HDdxr8zxtYmrVQQx8B1FLptUanPMn76ixNE9SBncyc9XmUyZtkLR2iHYyLcfTgAlxHCihG1XLmo4LWFD9guL39i0DW69HvdncmWeFt0n0ftQU4sgWYgKpuJoXthGt_fr1eO-hg3wxs4K-gw1BR_v77rXPAmhcHv2XSoKEmU9TiZsd8yHyr6tudTvwc2rKTQq.jpg",
+      "hash": "8cf2a72b0f0b6b0691bff92e6098abdb4c573953142806f1ac059adf4452882f",
+      "ownerId": "GP-DEMO-99",
+      "ownerEmail": "demo@guardplay.ai",
+      "uploadTime": "2026-04-23T16:31:48.301Z",
+      "status": "Protected",
+      "mimeType": "image/jpeg",
+      "size": 24381
+    }
+  ],
+  "violations": [
+    {
+      "id": "05e3552a-d5be-4d72-88ff-5a30d2ba7a78",
+      "assetId": "1a19867b-76df-41f2-8807-98c564bd3ce6",
+      "filename": "HDdxr8zxtYmrVQQx8B1FLptUanPMn76ixNE9SBncyc9XmUyZtkLR2iHYyLcfTgAlxHCihG1XLmo4LWFD9guL39i0DW69HvdncmWeFt0n0ftQU4sgWYgKpuJoXthGt_fr1eO-hg3wxs4K-gw1BR_v77rXPAmhcHv2XSoKEmU9TiZsd8yHyr6tudTvwc2rKTQq.jpg",
+      "platform": "TikTok",
+      "confidence": "94.92",
+      "deepfake": true,
+      "timestamp": "2026-04-23T16:31:59.576Z",
+      "status": "Detected"
+    },
+    {
+      "id": "ff869223-edf9-4882-a963-0ab14ad246e4",
+      "assetId": "1a19867b-76df-41f2-8807-98c564bd3ce6",
+      "filename": "HDdxr8zxtYmrVQQx8B1FLptUanPMn76ixNE9SBncyc9XmUyZtkLR2iHYyLcfTgAlxHCihG1XLmo4LWFD9guL39i0DW69HvdncmWeFt0n0ftQU4sgWYgKpuJoXthGt_fr1eO-hg3wxs4K-gw1BR_v77rXPAmhcHv2XSoKEmU9TiZsd8yHyr6tudTvwc2rKTQq.jpg",
+      "platform": "Web Monitor",
+      "confidence": "100.00",
+      "deepfake": false,
+      "timestamp": "2026-04-23T16:37:32.833Z",
+      "status": "Detected",
+      "type": "Repost"
+    }
+  ],
+  "analytics": {
+    "totalUploads": 1,
+    "violationsCount": 2,
+    "deepfakeCount": 1
+  }
 }

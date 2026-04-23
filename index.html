@@ -3,195 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SportShield - Sports Media Integrity Protection</title>
-    <link rel="stylesheet" href="style.css">
+    <title>GuardPlay AI | Advanced DRM & Content Protection</title>
+    <meta name="description" content="AI-powered content protection, deepfake detection, and automated DMCA takedowns for sports media.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --bg-dark: #070a13;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --text-white: #f8fafc;
+            --text-gray: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
+            --glass: rgba(15, 23, 42, 0.7);
+            --font-main: 'Outfit', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .background-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.15;
+            border-radius: 50%;
+            animation: float 20s infinite alternate;
+        }
+
+        .blob-1 { width: 400px; height: 400px; background: var(--primary); top: -100px; right: -100px; }
+        .blob-2 { width: 300px; height: 300px; background: var(--secondary); bottom: -50px; left: -50px; animation-delay: -5s; }
+        .blob-3 { width: 250px; height: 250px; background: var(--accent); top: 40%; left: 20%; animation-delay: -10s; }
+
+        @keyframes float {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(100px, 50px) scale(1.1); }
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .glass { background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 20px; }
+        .gradient-text { background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        nav {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7, 10, 19, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; }
+        .logo span { color: var(--primary); }
+        .nav-links { display: flex; gap: 32px; }
+        .nav-link { color: var(--text-gray); text-decoration: none; font-weight: 500; transition: 0.3s; }
+        .nav-link:hover, .nav-link.active { color: white; }
+        .nav-actions { display: flex; align-items: center; gap: 16px; }
+
+        .user-profile { display: flex; align-items: center; gap: 12px; padding: 4px 12px; background: rgba(255, 255, 255, 0.05); border-radius: 30px; border: 1px solid var(--border); }
+        .user-info { display: flex; flex-direction: column; text-align: right; }
+        .user-info span { font-size: 0.85rem; font-weight: 600; }
+        .user-info small { font-size: 0.7rem; color: var(--text-gray); }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--primary); }
+
+        .btn { padding: 10px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; border: none; display: flex; align-items: center; gap: 10px; font-family: var(--font-main); text-decoration: none; }
+        .btn-large { padding: 14px 32px; font-size: 1rem; }
+        .btn-full { width: 100%; justify-content: center; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: white; }
+        .btn-icon { background: transparent; border: none; color: var(--text-gray); cursor: pointer; }
+
+        section { padding: 140px 0 80px; min-height: 100vh; display: none; }
+        section.active { display: block; animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-header { margin-bottom: 40px; }
+        .section-header h2 { font-size: 2.25rem; font-weight: 800; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+        .card { padding: 24px; transition: 0.3s; }
+        .card:hover { transform: translateY(-8px); border-color: var(--primary-light); }
+        .asset-thumb { height: 180px; background: #000; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .asset-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .stat-card { display: flex; align-items: center; gap: 20px; padding: 24px; }
+        .stat-val { font-size: 2rem; font-weight: 800; }
+        
+        .console-card { margin-top: 32px; border-radius: 12px; overflow: hidden; }
+        .console-header { background: rgba(0, 0, 0, 0.3); padding: 10px 20px; border-bottom: 1px solid var(--border); }
+        .console-body { padding: 20px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #a5b4fc; background: rgba(0,0,0,0.2); }
+        
+        .table-container { overflow-x: auto; padding: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 16px; color: var(--text-gray); border-bottom: 1px solid var(--border); }
+        td { padding: 16px; border-bottom: 1px solid var(--border); }
+
+        .badge { padding: 4px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; }
+        .badge-primary { background: rgba(99, 102, 241, 0.15); color: var(--primary-light); }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--accent); }
+
+        .upload-card { max-width: 600px; margin: 0 auto; padding: 40px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--text-gray); }
+        .form-group input { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: white; outline: none; }
+        .drop-zone { border: 2px dashed var(--border); padding: 30px; text-align: center; cursor: pointer; }
+    </style>
 </head>
 <body>
-    <!-- Authentication Modal -->
-    <div id="authModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div class="auth-container">
-                <h2 id="authTitle">Login</h2>
-                <form id="authForm">
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" name="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required>
-                    </div>
-                    <div class="form-group" id="emailGroup" style="display: none;">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" name="email">
-                    </div>
-                    <button type="submit" class="btn btn-primary" id="authSubmitBtn">Login</button>
-                </form>
-                
-                <div class="auth-divider">
-                    <span>OR</span>
-                </div>
-                
-                <div class="google-auth-container">
-                    <a href="/auth/google" class="google-login-btn">
-                        <svg width="18" height="18" viewBox="0 0 18 18">
-                            <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
-                            <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.04a4.8 4.8 0 0 1-7.18-2.53H1.83v2.07A8 8 0 0 0 8.98 17z"/>
-                            <path fill="#FBBC05" d="M4.5 10.49a4.8 4.8 0 0 1 0-3.07V5.35H1.83a8 8 0 0 0 0 7.21l2.67-2.07z"/>
-                            <path fill="#EA4335" d="M8.98 4.9c1.16 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.35L4.5 7.42a4.77 4.77 0 0 1 4.48-2.52z"/>
-                        </svg>
-                        Sign in with Google
-                    </a>
-                </div>
-                
-                <p class="auth-switch">
-                    <span id="authSwitchText">Don't have an account?</span>
-                    <a href="#" id="authSwitchLink">Register</a>
-                </p>
-            </div>
-        </div>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
     </div>
 
-    <!-- Header with Navigation -->
-    <header>
-        <nav class="navbar">
-            <div class="nav-container">
-                <div class="nav-logo">
-                    <h1>SportShield</h1>
+    <nav>
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo" onclick="navigateTo('home')">GUARDPLAY<span>AI</span></div>
+                <div class="nav-links">
+                    <a href="#home" class="nav-link active" onclick="navigateTo('home')">Home</a>
+                    <a href="#upload" class="nav-link" onclick="navigateTo('upload')">Register</a>
+                    <a href="#verify" class="nav-link" onclick="navigateTo('verify')">Verify Leak</a>
+                    <a href="#gallery" class="nav-link" onclick="navigateTo('gallery')">Registry</a>
+                    <a href="#violations" class="nav-link" onclick="navigateTo('violations')">Violations</a>
+                    <a href="#analytics" class="nav-link" onclick="navigateTo('analytics')">Analytics</a>
                 </div>
-                <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a href="#home" class="nav-link active" data-section="home">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#gallery" class="nav-link" data-section="gallery">Gallery</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#verify" class="nav-link" data-section="verify">Verify</a>
-                    </li>
-                </ul>
                 <div class="nav-actions">
-                    <button id="loginBtn" class="btn btn-outline">Login</button>
+                    <button class="btn btn-outline" id="demoBtn" onclick="window.location.href='/auth/demo-login'">Guest Demo</button>
+                    <button class="btn btn-primary" id="loginBtn" onclick="window.location.href='/auth/google'">Google Login</button>
                     <div id="userProfile" class="user-profile" style="display: none;">
-                        <img id="userAvatar" src="" alt="User Avatar" class="user-avatar">
-                        <span id="usernameDisplay" class="username">User</span>
-                        <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+                        <div class="user-info">
+                            <span id="userName">User</span>
+                            <small id="userEmail">email</small>
+                        </div>
+                        <img id="userAvatar" src="" alt="Avatar" class="avatar">
+                        <button class="btn-icon" onclick="window.location.href='/auth/logout'">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                        </button>
                     </div>
                 </div>
             </div>
-        </nav>
-    </header>
+        </div>
+    </nav>
 
-    <!-- Main Content -->
     <main>
-        <!-- Home Section -->
-        <section id="home" class="section active">
-            <div class="hero-container">
-                <div class="hero-content">
-                    <h1 class="hero-title">
-                        Protect <span class="text-blue">Every Frame</span>.<br>
-                        Prove <span class="text-orange">Every Moment</span>.
-                    </h1>
-                    <p class="hero-description">
-                        SportShield gives leagues, photographers, and journalists cryptographic proof of ownership — 
-                        and lets anyone verify authenticity in seconds.
-                    </p>
-                    <div class="hero-actions">
-                        <button class="btn btn-primary btn-large" onclick="navigateToSection('verify')">
-                            Verify a File
-                        </button>
-                        <button class="btn btn-outline btn-large" id="registerMediaBtn">
-                            Register Media
-                        </button>
-                    </div>
+        <section id="home" class="active">
+            <div class="container" style="text-align: center;">
+                <span class="badge badge-primary pulse">AI PROTECTION ACTIVE</span>
+                <h1 class="hero-h1" style="font-size: 4rem; margin: 20px 0;">The Future of <br><span class="gradient-text">Sports DRM</span></h1>
+                <p class="hero-p" style="max-width: 600px; margin: 0 auto 40px; color: var(--text-gray);">Protect your sports content with advanced SHA-256 hashing and AI-driven forensic watermarking.</p>
+                <div style="display: flex; gap: 20px; justify-content: center;">
+                    <button class="btn btn-primary btn-large" onclick="navigateTo('upload')">Protect New Asset</button>
+                    <button class="btn glass btn-large" onclick="navigateTo('violations')">View Active Leaks</button>
                 </div>
             </div>
         </section>
 
-        <!-- Gallery Section -->
-        <section id="gallery" class="section">
+        <section id="upload">
             <div class="container">
                 <div class="section-header">
-                    <h2>Media Gallery</h2>
-                    <p>Browse and manage your protected media assets</p>
+                    <h2>Register Asset</h2>
+                    <p>Secure your content in the global registry</p>
                 </div>
-                
-                <!-- Upload Section (only visible when authenticated) -->
-                <div id="uploadSection" class="upload-container" style="display: none;">
-                    <h3>Upload New Media</h3>
-                    <form id="uploadForm" class="upload-form">
+                <div class="glass upload-card">
+                    <form id="uploadForm">
                         <div class="form-group">
-                            <label for="mediaFile">Select Media File</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="mediaFile" name="media" accept="image/*,video/*" required>
-                                <label for="mediaFile" class="file-input-label">
-                                    <span id="fileLabel">Choose file or drag here</span>
-                                </label>
-                            </div>
-                            <p class="help-text">Supported: Images (JPG, PNG, GIF) and Videos (MP4, AVI, MOV)</p>
+                            <label>Asset Description</label>
+                            <input type="text" placeholder="e.g. UCL Highlights" id="assetName" required>
                         </div>
-                        
-                        <button type="submit" class="btn btn-primary">
-                            <span class="btn-text">Upload & Protect</span>
-                            <span class="btn-loader" style="display: none;">Processing...</span>
-                        </button>
+                        <div class="form-group">
+                            <label>Media Source</label>
+                            <div class="glass drop-zone" id="dropZone">
+                                <p id="fileNameDisplay">Click or Drag to Upload</p>
+                                <input type="file" id="fileInput" hidden>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Register & Encrypt</button>
                     </form>
-                    
-                    <div id="uploadResult" class="result-container" style="display: none;"></div>
-                </div>
-
-                <!-- Gallery Grid -->
-                <div class="gallery-grid">
-                    <div id="galleryContent" class="gallery-content">
-                        <div class="auth-prompt">
-                            <h3>Login Required</h3>
-                            <p>Please login to view and manage your media gallery.</p>
-                            <button class="btn btn-primary" onclick="showAuthModal('login')">Login</button>
+                    <div id="uploadStatus" style="display: none; margin-top: 20px;">
+                        <div class="glass" style="padding: 15px; text-align: center; border-color: var(--primary);">
+                            <p id="statusMsg"></p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Verify Section -->
-        <section id="verify" class="section">
+        <section id="verify">
             <div class="container">
                 <div class="section-header">
-                    <h2>Verify Media Authenticity</h2>
-                    <p>Upload a file to verify its authenticity and integrity</p>
+                    <h2>Verify Suspected Leak</h2>
+                    <p>Check if a file matches our registry and detect deepfakes</p>
                 </div>
-                
-                <div class="verify-container">
-                    <form id="verifyForm" class="verify-form">
+                <div class="glass upload-card">
+                    <form id="verifyForm">
                         <div class="form-group">
-                            <label for="verifyFile">Select File to Verify</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="verifyFile" name="media" accept="image/*,video/*" required>
-                                <label for="verifyFile" class="file-input-label">
-                                    <span id="verifyFileLabel">Choose file to verify</span>
-                                </label>
+                            <label>Suspected Media File</label>
+                            <div class="glass drop-zone" id="verifyDropZone">
+                                <p id="verifyFileNameDisplay">Click or Drag Suspected File</p>
+                                <input type="file" id="verifyFileInput" hidden>
                             </div>
                         </div>
-                        
-                        <button type="submit" class="btn btn-primary btn-large">
-                            <span class="btn-text">Verify Authenticity</span>
-                            <span class="btn-loader" style="display: none;">Verifying...</span>
-                        </button>
+                        <button type="submit" class="btn btn-primary btn-full">Scan Global Registry</button>
                     </form>
-                    
-                    <div id="verifyResult" class="result-container" style="display: none;"></div>
+                    <div id="verifyStatus" style="display: none; margin-top: 20px;">
+                        <div class="glass" style="padding: 15px; text-align: left; border-color: var(--primary);">
+                            <p id="verifyMsg"></p>
+                            <div id="verifyDetails" style="margin-top: 10px; font-size: 0.9rem;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="gallery">
+            <div class="container">
+                <div class="section-header"><h2>Asset Registry</h2></div>
+                <div id="galleryGrid" class="dashboard-grid"></div>
+            </div>
+        </section>
+
+        <section id="violations">
+            <div class="container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h2>Live Violations</h2>
+                    <button class="btn btn-outline" onclick="simulateViolation()">Simulate Leak</button>
+                </div>
+                <div class="glass table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Asset</th><th>Platform</th><th>Confidence</th><th>AI Detect</th><th>Status</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="violationTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="analytics">
+            <div class="container">
+                <div class="section-header"><h2>System Analytics</h2></div>
+                <div class="dashboard-grid">
+                    <div class="glass stat-card"><div><p>Total Protected</p><p class="stat-val" id="statTotal">0</p></div></div>
+                    <div class="glass stat-card"><div><p>Violations Blocked</p><p class="stat-val" id="statViolations">0</p></div></div>
+                    <div class="glass stat-card"><div><p>Deepfake Shield</p><p class="stat-val" id="statDeepfakes">0</p></div></div>
+                </div>
+                <div class="glass console-card">
+                    <div class="console-header"><p>Global Monitoring Console</p></div>
+                    <div id="activityLog" class="console-body"></div>
                 </div>
             </div>
         </section>
     </main>
-
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 SportShield - Protecting Sports Media Integrity</p>
-        </div>
-    </footer>
 
     <script src="script.js"></script>
 </body>

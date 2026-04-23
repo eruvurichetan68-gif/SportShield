@@ -1,13 +1,15 @@
 @echo off
-echo Starting SportShield Application...
+echo ==========================================
+echo Starting GUARDPLAY AI DRM PLATFORM...
+echo ==========================================
 echo.
-echo Starting Backend Server...
 cd backend
-start "SportShield Backend" cmd /k "npm start"
+start "GuardPlay Backend" cmd /k "npm start"
 echo.
-echo Backend server is starting on http://localhost:3000
+echo ✅ Backend server is starting!
+echo 🌐 Access the platform at: http://localhost:3000
 echo.
-echo Please open index.html in your browser
-echo or run: npx http-server . -p 8080
-echo.
+echo ==========================================
+timeout /t 3 > nul
+explorer http://localhost:3000
 pause

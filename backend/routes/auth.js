@@ -29,8 +29,8 @@ router.get('/google/callback', (req, res, next) => {
     }
     
     console.log('✅ Google OAuth successful for user:', req.user.username);
-    // Successful authentication, redirect to dashboard
-    res.redirect('/dashboard.html');
+    // Successful authentication, redirect to landing page
+    res.redirect('/dashboard');
   });
 });
 
@@ -54,6 +54,26 @@ router.get('/logout', (req, res) => {
       console.log('✅ User logged out successfully');
       res.redirect('/?logout=success');
     });
+  });
+});
+
+// Demo Login for rapid testing/presentation
+router.get('/demo-login', (req, res) => {
+  console.log('🧪 Initiating Demo Login...');
+  const demoUser = {
+    id: 'GP-DEMO-99',
+    username: 'Demo User',
+    email: 'demo@guardplay.ai',
+    profilePicture: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+    firstName: 'Demo',
+    lastName: 'User',
+    provider: 'demo',
+    createdAt: new Date().toISOString()
+  };
+  
+  req.login(demoUser, (err) => {
+    if (err) return res.redirect('/?error=demo_failed');
+    res.redirect('/');
   });
 });
 

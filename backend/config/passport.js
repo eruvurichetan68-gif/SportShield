@@ -10,9 +10,19 @@ const DB_FILE = path.join(__dirname, '..', 'database.json');
 // Helper functions to read/write database
 const readDB = () => {
   try {
-    return fs.readJsonSync(DB_FILE);
+    if (!fs.existsSync(DB_FILE)) {
+      const initialDB = { users: [], media: [], violations: [], analytics: { totalUploads: 0, violationsCount: 0, deepfakeCount: 0 } };
+      fs.writeJsonSync(DB_FILE, initialDB, { spaces: 2 });
+      return initialDB;
+    }
+    const db = fs.readJsonSync(DB_FILE);
+    if (!db.users) db.users = [];
+    if (!db.media) db.media = [];
+    if (!db.violations) db.violations = [];
+    if (!db.analytics) db.analytics = { totalUploads: 0, violationsCount: 0, deepfakeCount: 0 };
+    return db;
   } catch (error) {
-    return { users: [], media: [], blockchain: [] };
+    return { users: [], media: [], violations: [], analytics: { totalUploads: 0, violationsCount: 0, deepfakeCount: 0 } };
   }
 };
 
@@ -28,6 +38,17 @@ passport.serializeUser((user, done) => {
 // Deserialize user from session
 passport.deserializeUser((id, done) => {
   try {
+    if (id === 'GP-DEMO-99') {
+      return done(null, {
+        id: 'GP-DEMO-99',
+        username: 'Demo User',
+        email: 'demo@guardplay.ai',
+        profilePicture: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+        firstName: 'Demo',
+        lastName: 'User',
+        provider: 'demo'
+      });
+    }
     const db = readDB();
     const user = db.users.find(u => u.id === id);
     done(null, user);
@@ -41,17 +62,14 @@ passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: "/auth/google/callback",
-  scope: ['profile', 'email']
+  proxy: true // Trust proxies if any
 },
 async (accessToken, refreshToken, profile, done) => {
   try {
-    console.log('🔍 Google OAuth profile received:', {
-      id: profile.id,
-      displayName: profile.displayName,
-      email: profile.emails?.[0]?.value
-    });
+    console.log('🔍 Google OAuth profile received:', profile.id, profile.displayName);
 
-    const db = readDB();
+    const db = fs.readJsonSync(DB_FILE);
+    if (!db.users) db.users = [];
     
     // Check if user already exists by Google ID
     let existingUser = db.users.find(u => u.googleId === profile.id);
@@ -62,27 +80,26 @@ async (accessToken, refreshToken, profile, done) => {
     }
     
     // Check if user exists with same email (for linking accounts)
-    if (profile.emails && profile.emails[0]) {
-      existingUser = db.users.find(u => u.email === profile.emails[0].value);
+    const email = profile.emails?.[0]?.value || '';
+    if (email) {
+      existingUser = db.users.find(u => u.email === email);
       
       if (existingUser) {
-        console.log('🔗 Linking Google account to existing user:', existingUser.username);
-        // Link Google account to existing user
+        console.log('🔗 Linking Google account to existing email:', email);
         existingUser.googleId = profile.id;
-        existingUser.profilePicture = profile.photos?.[0]?.value || existingUser.profilePicture;
         existingUser.provider = 'google';
-        writeDB(db);
+        fs.writeJsonSync(DB_FILE, db, { spaces: 2 });
         return done(null, existingUser);
       }
     }
     
     // Create new user
-    console.log('👤 Creating new Google user');
+    console.log('👤 Creating new user for:', profile.displayName);
     const newUser = {
       id: uuidv4(),
       googleId: profile.id,
       username: profile.displayName || `user_${profile.id}`,
-      email: profile.emails?.[0]?.value || '',
+      email: email,
       profilePicture: profile.photos?.[0]?.value || '',
       firstName: profile.name?.givenName || '',
       lastName: profile.name?.familyName || '',
@@ -90,15 +107,14 @@ async (accessToken, refreshToken, profile, done) => {
       createdAt: new Date().toISOString()
     };
     
-    // Save user to database
     db.users.push(newUser);
-    writeDB(db);
+    fs.writeJsonSync(DB_FILE, db, { spaces: 2 });
     
-    console.log('✅ New Google user created successfully:', newUser.username);
+    console.log('✅ New Google user created successfully');
     return done(null, newUser);
     
   } catch (error) {
-    console.error('❌ Google OAuth error:', error);
+    console.error('❌ Google OAuth Strategy Error:', error);
     return done(error, null);
   }
 }
