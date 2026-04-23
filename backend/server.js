@@ -399,12 +399,17 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
 
     // STEP 4: Save to DB
     const mediaRecord = {
-      filename: req.file.originalname,
+      id: uuidv4(),
+      originalName: req.file.originalname,
+      fileName: req.file.filename,
       path: req.file.path,
-      hash: hash,
+      mimeType: req.file.mimetype,
+      fileSize: req.file.size,
+      finalHash: hash,
       ownerId: req.user ? req.user.id : 'anonymous',
       uploadTime: new Date().toISOString(),
-      status: "authentic"
+      status: "authentic",
+      verified: true
     };
     
     db.media.push(mediaRecord);
@@ -459,8 +464,8 @@ app.post('/api/verify', upload.single('media'), async (req, res) => {
         blockchain: db.blockchain.find(block => block.id === match.blockId)
       });
     } else {
-      // Check if original hash matches (in case watermark was removed)
-      const originalMatches = db.media.filter(media => media.originalHash === uploadedHash);
+      // Check if original hash matches
+      const originalMatches = db.media.filter(media => media.finalHash === uploadedHash);
       
       if (originalMatches.length > 0) {
         res.json({
@@ -558,8 +563,7 @@ app.get('/api/search', (req, res) => {
     const db = readDB();
     const results = db.media.filter(media => 
       media.originalName.toLowerCase().includes(query.toLowerCase()) ||
-      media.finalHash.includes(query) ||
-      media.originalHash.includes(query)
+      media.finalHash.includes(query)
     );
     
     res.json(results);
