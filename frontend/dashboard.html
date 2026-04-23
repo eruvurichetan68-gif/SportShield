@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SportShield</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header with Navigation -->
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <h1>SportShield</h1>
+                </div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="index.html#home" class="nav-link">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#gallery" class="nav-link">Gallery</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#verify" class="nav-link">Verify</a>
+                    </li>
+                </ul>
+                <div class="nav-actions">
+                    <div id="userProfile" class="user-profile">
+                        <img id="userAvatar" src="" alt="User Avatar" class="user-avatar">
+                        <span id="usernameDisplay" class="username">User</span>
+                        <a href="/auth/logout" class="btn btn-secondary">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <section class="section">
+            <div class="container">
+                <div class="dashboard-header">
+                    <h1>Welcome, <span id="welcomeName">User</span>! 👋</h1>
+                    <p>Your SportShield dashboard - Manage and protect your sports media</p>
+                </div>
+
+                <!-- Dashboard Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📁</div>
+                        <div class="stat-content">
+                            <h3 id="totalUploads">0</h3>
+                            <p>Total Uploads</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <h3 id="verifiedFiles">0</h3>
+                            <p>Verified Files</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⛓️</div>
+                        <div class="stat-content">
+                            <h3 id="blockchainEntries">0</h3>
+                            <p>Blockchain Entries</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💾</div>
+                        <div class="stat-content">
+                            <h3 id="totalSize">0 MB</h3>
+                            <p>Total Storage</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h2>Quick Actions</h2>
+                    <div class="action-buttons">
+                        <a href="index.html#gallery" class="btn btn-primary btn-large">
+                            📤 Upload New Media
+                        </a>
+                        <a href="index.html#verify" class="btn btn-outline btn-large">
+                            🔍 Verify Media
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Uploads -->
+                <div class="recent-uploads">
+                    <h2>Recent Uploads</h2>
+                    <div id="recentUploadsList" class="recent-list">
+                        <p class="no-data">No recent uploads</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 SportShield - Protecting Sports Media Integrity</p>
+        </div>
+    </footer>
+
+    <script>
+        // Load user data and dashboard stats
+        async function loadDashboard() {
+            try {
+                // Get user info
+                const authResponse = await fetch('/auth/me');
+                if (authResponse.ok) {
+                    const userData = await authResponse.json();
+                    document.getElementById('welcomeName').textContent = userData.firstName || userData.username;
+                    document.getElementById('usernameDisplay').textContent = userData.username;
+                    document.getElementById('userAvatar').src = userData.profilePicture || 'https://via.placeholder.com/32';
+                }
+
+                // Get dashboard stats
+                const statsResponse = await fetch('/api/stats');
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    document.getElementById('totalUploads').textContent = stats.totalUploads;
+                    document.getElementById('verifiedFiles').textContent = stats.verifiedFiles;
+                    document.getElementById('blockchainEntries').textContent = stats.blockchainEntries;
+                    document.getElementById('totalSize').textContent = (stats.totalFileSize / (1024 * 1024)).toFixed(2) + ' MB';
+
+                    // Display recent uploads
+                    const recentList = document.getElementById('recentUploadsList');
+                    if (stats.recentUploads && stats.recentUploads.length > 0) {
+                        recentList.innerHTML = stats.recentUploads.map(upload => `
+                            <div class="recent-item">
+                                <div class="recent-info">
+                                    <h4>${upload.originalName}</h4>
+                                    <p>Uploaded: ${new Date(upload.uploadTime).toLocaleDateString()}</p>
+                                </div>
+                                <div class="recent-status">
+                                    <span class="status-badge ${upload.verified ? 'verified' : 'pending'}">
+                                        ${upload.verified ? 'Verified' : 'Pending'}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                // Redirect to login if there's an error
+                window.location.href = '/index.html?login_required=true';
+            }
+        }
+
+        // Load dashboard when page loads
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+
+    <style>
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+        }
+
+        .stat-content h3 {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .stat-content p {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .quick-actions {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .quick-actions h2 {
+            margin-bottom: 20px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .recent-uploads h2 {
+            margin-bottom: 20px;
+        }
+
+        .recent-list {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .recent-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .recent-item:last-child {
+            border-bottom: none;
+        }
+
+        .recent-info h4 {
+            margin-bottom: 5px;
+        }
+
+        .recent-info p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.verified {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.pending {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+    </style>
+</body>
+</html>

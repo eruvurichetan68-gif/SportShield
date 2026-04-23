@@ -1,0 +1,17 @@
+{
+  "users": [
+    {
+      "id": "b5ddbb43-c787-49b3-b2c3-7760aa3ad4ff",
+      "googleId": "113399391342481364836",
+      "username": "MANDA NEELAKSH",
+      "email": "mandaneelaksh7m@gmail.com",
+      "profilePicture": "https://lh3.googleusercontent.com/a/ACg8ocK2Vif9AZ9z4hmqyc-5ytn1ufJaFq1NoCqIvuslBFdEW1Rdtw=s96-c",
+      "firstName": "MANDA",
+      "lastName": "NEELAKSH",
+      "provider": "google",
+      "createdAt": "2026-04-23T06:26:39.425Z"
+    }
+  ],
+  "media": [],
+  "blockchain": []
+}
