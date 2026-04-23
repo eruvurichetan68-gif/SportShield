@@ -14,10 +14,18 @@ const passport = require('./config/passport');
 const authRoutes = require('./routes/auth');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.set("trust proxy", 1);
+const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "https://sport-shield.vercel.app"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Session middleware
@@ -27,7 +35,8 @@ app.use(session({
   saveUninitialized: false,
   name: 'guardplay.session',
   cookie: { 
-    secure: false, // Set to true if using HTTPS
+    secure: true, 
+    sameSite: "none",
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 
   }
@@ -78,7 +87,7 @@ const ensureAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.status(401).json({ success: false, message: 'Authentication required' });
+  res.status(401).json({ error: "Unauthorized" });
 };
 
 // Configure multer for file uploads
@@ -190,7 +199,7 @@ app.post('/api/upload', ensureAuthenticated, upload.single('media'), async (req,
     });
   } catch (error) {
     console.error("Upload error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ error: "Something went wrong" });
   }
 });
 
@@ -203,97 +212,60 @@ app.get('/api/gallery', ensureAuthenticated, (req, res) => {
     const db = readDB();
     res.json({ success: true, data: db.media });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to fetch gallery" });
+    res.status(500).json({ error: "Something went wrong" });
   }
 });
 
-// Alias for requirement
+// Requirement: GET /gallery
 app.get('/gallery', ensureAuthenticated, (req, res) => {
-  const db = readDB();
-  res.json({ success: true, data: db.media });
+  try {
+    const db = readDB();
+    const assets = db.media.map(m => ({
+      filename: m.filename,
+      hash: m.hash,
+      owner: m.ownerEmail,
+      status: m.status
+    }));
+    res.json(assets);
+  } catch (error) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
 });
 
 // 3. Violation Detection (Verify)
 app.post('/api/verify', ensureAuthenticated, upload.single('media'), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ success: false, error: "No file provided" });
+    if (!req.file) return res.status(400).json({ error: "No file provided" });
 
     const uploadedHash = calculateHash(req.file.path);
     const db = readDB();
     
-    // Simulated Deepfake Detection (Gemini Mock)
-    const authenticityScore = (Math.random() * 20 + 75).toFixed(2); // 75-95%
-    const isDeepfake = authenticityScore < 85; 
-    const confidence = (Math.random() * 9 + 90).toFixed(2); // 90-99%
-
     const original = db.media.find(m => m.hash === uploadedHash);
     
+    fs.unlinkSync(req.file.path);
+
     if (original) {
-      // Exact match - Repost Violation
-      const violation = {
-        id: uuidv4(),
-        assetId: original.id,
-        filename: original.originalName,
-        platform: "Web Monitor",
-        confidence: "100.00",
-        deepfake: false,
-        timestamp: new Date().toISOString(),
-        status: "Detected",
-        type: "Repost"
-      };
-      db.violations.push(violation);
-      db.analytics.violationsCount = (db.analytics.violationsCount || 0) + 1;
-      writeDB(db);
-      
-      fs.unlinkSync(req.file.path);
       return res.json({
-        success: true,
-        match: true,
-        hash: uploadedHash,
-        authenticityScore: "100.00",
-        isDeepfake: false,
-        violation
+        violation: false,
+        confidence: 100,
+        deepfake: false
       });
     }
 
-    // Hash mismatch - could be a tampered version or a deepfake
-    // For demo purposes, if it's a mismatch, we'll simulate "Tamper Detection" 
-    // by comparing with the "most similar" (randomly chosen) asset if requested,
-    // or just marking it as a suspicious mismatch as requested.
-    
-    const randomAsset = db.media.length > 0 ? db.media[Math.floor(Math.random() * db.media.length)] : null;
-    
-    const violation = {
-      id: uuidv4(),
-      assetId: randomAsset ? randomAsset.id : 'unknown',
-      filename: req.file.originalname,
-      platform: "Global Scan",
-      confidence: confidence,
-      deepfake: isDeepfake,
-      timestamp: new Date().toISOString(),
-      status: "Detected",
-      type: isDeepfake ? "Deepfake" : "Tampered"
-    };
-
-    db.violations.push(violation);
-    db.analytics.violationsCount = (db.analytics.violationsCount || 0) + 1;
-    if (isDeepfake) db.analytics.deepfakeCount = (db.analytics.deepfakeCount || 0) + 1;
-    writeDB(db);
-
-    fs.unlinkSync(req.file.path);
-    res.json({
-      success: true,
-      match: false,
-      hash: uploadedHash,
-      authenticityScore,
-      isDeepfake,
-      violation
+    // Mismatch -> Violation
+    return res.json({
+      violation: true,
+      confidence: 95,
+      deepfake: false
     });
   } catch (error) {
     console.error("Verify error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ error: "Something went wrong" });
   }
 });
+
+// Alias for requirement
+app.post('/verify', ensureAuthenticated, (req, res) => res.redirect(307, '/api/verify'));
 
 // 4. Violation Dashboard
 app.get('/api/violations', ensureAuthenticated, (req, res) => {
