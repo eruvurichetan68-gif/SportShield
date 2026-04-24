@@ -23,7 +23,7 @@ const ensureNotAuthenticated = (req, res, next) => {
   }
 
   // If already authenticated, redirect to dashboard
-  res.redirect("https://sport-shield.vercel.app/dashboard.html");
+  res.redirect("https://sport-shield.vercel.app/dashboard");
 };
 
 // Middleware for API routes that returns JSON instead of redirect
