@@ -76,6 +76,8 @@ function setupNavigation() {
 function navigateTo(sectionId) {
     if (!sectionId) sectionId = 'home';
     
+    console.log('Navigating to:', sectionId);
+
     // Update links
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
@@ -85,22 +87,48 @@ function navigateTo(sectionId) {
     });
 
     // Update sections
-    document.querySelectorAll('section').forEach(section => {
+    const sections = document.querySelectorAll('section');
+    sections.forEach(section => {
         section.classList.remove('active');
     });
     
     const target = document.getElementById(sectionId);
     if (target) {
         target.classList.add('active');
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        console.warn('Section not found:', sectionId);
+        document.getElementById('home').classList.add('active');
     }
     
     currentSection = sectionId;
 
-    // Load section data
-    if (sectionId === 'gallery') loadGallery();
-    if (sectionId === 'violations') loadViolations();
-    if (sectionId === 'analytics') loadAnalytics();
+    // Load section data if logged in
+    if (currentUser) {
+        if (sectionId === 'gallery') loadGallery();
+        if (sectionId === 'violations') loadViolations();
+        if (sectionId === 'analytics') loadAnalytics();
+    } else if (['gallery', 'violations', 'analytics', 'upload'].includes(sectionId)) {
+        // Show login prompt for protected sections
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) {
+            const originalContent = targetSection.innerHTML;
+            if (!targetSection.querySelector('.login-prompt')) {
+                targetSection.innerHTML = `
+                    <div class="container">
+                        <div class="glass login-prompt" style="text-align: center; padding: 80px 20px;">
+                            <h2 style="margin-bottom: 20px;">Shield Access Required</h2>
+                            <p style="color: var(--text-gray); margin-bottom: 30px;">Please login to access the Global DRM Registry and AI monitoring tools.</p>
+                            <div style="display: flex; gap: 15px; justify-content: center;">
+                                <button class="btn btn-primary" onclick="window.location.href='/auth/google'">Login with Google</button>
+                                <button class="btn btn-outline" onclick="window.location.href='/auth/demo-login'">Demo Guest</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    }
 }
 
 // --- File Upload ---
@@ -148,6 +176,7 @@ function setupFileUpload() {
             const result = await response.json();
 
             if (result.success) {
+                showToast('Asset secured and registered successfully!');
                 statusMsg.innerHTML = `
                     <div style="color: var(--success)">
                         <strong>✅ ASSET SECURED</strong><br>
@@ -160,9 +189,11 @@ function setupFileUpload() {
                     navigateTo('gallery');
                 }, 2000);
             } else {
+                showToast(result.message || 'Upload failed', 'error');
                 statusMsg.innerHTML = `<span style="color: var(--danger)">❌ Error: ${result.message}</span>`;
             }
         } catch (err) {
+            showToast('Network error during upload', 'error');
             statusMsg.innerHTML = `<span style="color: var(--danger)">❌ Network Error</span>`;
         }
     });
@@ -243,6 +274,7 @@ function setupVerifyForm() {
 
             if (result.success) {
                 if (result.match) {
+                    showToast('Violation detected! Match found in registry.', 'error');
                     statusMsg.innerHTML = '<span style="color: var(--danger)">🔴 CRITICAL VIOLATION DETECTED</span>';
                     detailsDiv.innerHTML = `
                         <div class="glass" style="padding: 10px; margin-top: 10px; border-color: var(--danger);">
@@ -253,6 +285,7 @@ function setupVerifyForm() {
                         </div>
                     `;
                 } else {
+                    showToast(result.isDeepfake ? 'Deepfake detected!' : 'Suspicious content detected!', 'warning');
                     statusMsg.innerHTML = result.isDeepfake ? 
                         '<span style="color: var(--danger)">⚠️ AI DEEPFAKE DETECTED</span>' : 
                         '<span style="color: var(--warning)">⚠️ SUSPICIOUS TAMPERING DETECTED</span>';
@@ -270,9 +303,11 @@ function setupVerifyForm() {
                 // Automatically refresh violations and analytics
                 loadAnalytics();
             } else {
+                showToast(result.error || 'Verification failed', 'error');
                 statusMsg.innerHTML = `<span style="color: var(--danger)">❌ Error: ${result.error}</span>`;
             }
         } catch (err) {
+            showToast('Network error during verification', 'error');
             statusMsg.innerHTML = `<span style="color: var(--danger)">❌ Network Error</span>`;
         }
     });
@@ -327,14 +362,14 @@ async function loadGallery() {
             grid.innerHTML = result.data.map(asset => `
                 <div class="glass card">
                     <div class="asset-thumb">
-                        ${asset.mimeType.startsWith('image') ? 
+                        ${asset.mimeType && asset.mimeType.startsWith('image') ? 
                             `<img src="/uploads/${asset.filename}" alt="${asset.originalName}">` : 
                             '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>'}
                     </div>
                     <div class="asset-info">
-                        <h3>${asset.originalName}</h3>
+                        <h3 title="${asset.originalName}">${truncate(asset.originalName, 25)}</h3>
                         <p style="color: var(--text-gray); font-size: 0.75rem;">Owner: ${asset.ownerEmail || 'Unknown'}</p>
-                        <div class="asset-meta">
+                        <div class="asset-meta" style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
                             <span class="badge badge-success">🟢 Protected</span>
                             <code style="font-size: 0.65rem; color: var(--primary-light)">${asset.hash.substring(0,10)}...</code>
                         </div>
@@ -360,7 +395,7 @@ async function loadViolations() {
         if (result.success && result.data.length > 0) {
             tbody.innerHTML = result.data.map(v => `
                 <tr>
-                    <td style="font-weight: 600;">${v.filename}</td>
+                    <td style="font-weight: 600;" title="${v.filename}">${truncate(v.filename, 30)}</td>
                     <td>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="color: var(--secondary)">${v.platform}</span>
@@ -374,7 +409,7 @@ async function loadViolations() {
                         </span>
                     </td>
                     <td>
-                        ${v.status === 'Detected' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.7rem;" onclick="sendTakedown('${v.id}')">SEND TAKEDOWN</button>` : '<span style="color: var(--success); font-size: 0.7rem;">DMCA SENT</span>'}
+                        ${v.status === 'Detected' ? `<button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.75rem;" onclick="sendTakedown('${v.id}')">TAKE DOWN</button>` : '<span style="color: var(--success); font-size: 0.75rem; font-weight: 600;">✅ DMCA FILED</span>'}
                     </td>
                 </tr>
             `).join('');
@@ -391,12 +426,12 @@ async function sendTakedown(id) {
         const response = await fetch(`${API_BASE}/takedown/${id}`, { method: 'POST' });
         const result = await response.json();
         if (result.success) {
-            alert('DMCA Notice Sent to Platform! Violation status updated.');
+            showToast('DMCA Notice Sent to Platform!');
             loadViolations();
             loadAnalytics();
         }
     } catch (err) {
-        alert('Action failed.');
+        showToast('Takedown request failed', 'error');
     }
 }
 
@@ -420,7 +455,7 @@ async function simulateViolation(silent = false) {
         const result = await response.json();
         if (result.success) {
             if (!silent) {
-                alert('🚨 LEAK DETECTED: ' + result.violation.filename + ' found on ' + result.violation.platform);
+                showToast(`Leak detected on ${result.violation.platform}!`, 'warning');
             } else {
                 console.log('🚨 Background Violation Detected:', result.violation.filename);
             }
@@ -428,8 +463,34 @@ async function simulateViolation(silent = false) {
             loadAnalytics();
         }
     } catch (err) {
-        if (!silent) alert('Could not simulate leak. Please register at least one asset first.');
+        if (!silent) showToast('Could not simulate leak. Register an asset first.', 'error');
     }
+}
+
+// --- Utilities ---
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    let icon = '✅';
+    if (type === 'error') icon = '❌';
+    if (type === 'warning') icon = '⚠️';
+
+    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(20px)';
+        setTimeout(() => toast.remove(), 400);
+    }, 4000);
+}
+
+function truncate(str, n) {
+    return (str.length > n) ? str.substr(0, n-1) + '&hellip;' : str;
 }
 
 function updateActivityLog() {

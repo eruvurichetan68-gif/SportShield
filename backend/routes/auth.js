@@ -29,8 +29,8 @@ router.get('/google/callback', (req, res, next) => {
     }
     
     console.log('✅ Google OAuth successful for user:', req.user.username);
-    // Successful authentication, redirect to frontend dashboard
-    res.redirect('https://sport-shield.vercel.app/dashboard.html');
+    // Successful authentication, redirect to frontend root
+    res.redirect('/');
   });
 });
 

@@ -1,11 +1,10 @@
-// Load environment variables FIRST
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
 const cors = require('cors');
-const path = require('path');
 const fs = require('fs-extra');
 const sharp = require('sharp');
 const { v4: uuidv4 } = require('uuid');
@@ -246,21 +245,28 @@ app.post('/api/verify', ensureAuthenticated, upload.single('media'), async (req,
 
     if (original) {
       return res.json({
-        violation: false,
-        confidence: 100,
-        deepfake: false
+        success: true,
+        match: true,
+        violation: {
+          filename: original.originalName,
+          confidence: 100
+        },
+        authenticityScore: 100,
+        isDeepfake: false
       });
     }
 
-    // Mismatch -> Violation
+    // Mismatch/Deepfake simulation
+    const isDeepfake = Math.random() > 0.8;
     return res.json({
-      violation: true,
-      confidence: 95,
-      deepfake: false
+      success: true,
+      match: false,
+      isDeepfake: isDeepfake,
+      authenticityScore: isDeepfake ? 12 : 88
     });
   } catch (error) {
     console.error("Verify error:", error);
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(500).json({ success: false, error: "Something went wrong" });
   }
 });
 
